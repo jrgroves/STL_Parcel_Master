@@ -1,32 +1,29 @@
+#This file extracts the sales.txt from the assessors eoy zip files and processes the data
+#Jeremy R. Groves
+#April 4, 2025
+
 rm(list=ls())
 
 library(tidyverse)
 library(foreign)
 
+#Set the year of the EOY file to extract from
+  i <- 2024
 
-simple<-function(x){
-  x<-x %>%
-    subset(!is.na(PRICE)) %>%
-    subset(PRICE>0) %>%
-    mutate(SALEVAL = str_to_upper(SALEVAL))%>%
-      subset(SALEVAL != "2" & SALEVAL != "4") %>%
-       subset(SALEVAL!="T" & SALEVAL!="D" & SALEVAL!="Q" & SALEVAL!="R" & SALEVAL!="V") %>%
-       subset(!is.na(SALEVAL)) %>%
-    mutate(SALEDT = as.Date(SALEDT,format="%d-%B-%y")) %>%
-       select(c("PARID","SALEDT","PRICE","SALETYPE","SALEVAL")) 
-    
-  
-  return(x)
-}
+#Extract and Read
+  temp <- read.csv(unz(paste0("./Data/STLCOMO_REAL_ASMTROLL_EOY_",i,".zip"), "sales.txt"), sep = "|", header = TRUE)
 
-sales20<-simple(read.csv("./Data/sales.csv",header=TRUE,sep="|"))
-sales19<-simple(read.csv("./Data/sales19.csv",header=TRUE,sep="|"))
+#Process Data
+  sales <- temp %>%
+    filter(!is.na(PRICE),
+           PRICE > 0,
+           SALEVAL == "4" | SALEVAL == "5" | SALEVAL == "F" | SALEVAL == "I" | SALEVAL == "P" |
+             SALEVAL == "T" | SALEVAL == "X" | SALEVAL == "Z") %>%
+    mutate(SALEDT = as.Date(SALEDT, "%d-%b-%Y"),
+           SALEYR = year(SALEDT)) %>%
+    select(PARID, SALEDT, SALEYR, PRICE, SALEVAL, SALETYPE) %>%
+    filter(SALEYR < 1979)
 
-A<-rbind(sales20,sales19)
+#Save as RData file
+  save(sales, file = "./Data/Sales.RData")
 
-
-B<-A %>%
-    distinct() %>%
-      add_count(PARID)
-
-c<-subset(B,B$PRICE<10000)
