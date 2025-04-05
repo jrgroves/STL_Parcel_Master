@@ -22,7 +22,7 @@ library(foreign)
     mutate(SALEDT = as.Date(SALEDT, "%d-%b-%Y"),
            SALEYR = year(SALEDT)) %>%
     select(PARID, SALEDT, SALEYR, PRICE, SALEVAL, SALETYPE) %>%
-    filter(SALEYR < 1979)
+    filter(SALEYR > 1979)
 
 #Save as RData file
   save(sales, file = "./Data/Sales.RData")
